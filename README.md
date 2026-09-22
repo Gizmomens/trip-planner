@@ -2,8 +2,6 @@
 
 A Django + React trip planner for the supplied full-stack assessment. Enter the current, pickup and drop-off locations and cycle hours already used. The application plans a truck route through real mapped facilities, schedules duty/rest activities, and draws projected daily log sheets.
 
-**Assessment planner, not a certified ELD or vehicle-specific navigation system.** Facility availability and permission to stop are assumed. The supplied April 2022 FMCSA guide is the rule reference.
-
 ## Local setup (PowerShell)
 
 Prerequisites: Python 3.14 and Node 24/npm. The installed `python` command may select an older interpreter, so select Python explicitly.
