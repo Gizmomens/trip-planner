@@ -1,0 +1,17 @@
+[project]
+name = "spotter-backend"
+version = "0.1.0"
+description = "Assessment-scoped road trip and projected duty log planner"
+requires-python = ">=3.12"
+dependencies = [
+  "Django>=5.2.8,<5.3",
+  "httpx>=0.28,<0.29",
+  "python-dotenv>=1.1,<2",
+]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["config*", "trips*"]

@@ -1,0 +1,590 @@
+.daily-logs-section {
+  margin-top: 34px;
+  scroll-margin-top: 20px;
+}
+.logs-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+.logs-section-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 23px;
+  font-weight: 650;
+  letter-spacing: -0.5px;
+  margin-top: 7px;
+}
+.logs-section-heading h2 svg {
+  color: #58879f;
+}
+.logs-section-heading p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 8px;
+}
+.projected-badge {
+  padding: 8px 11px;
+  border: 1px solid #d5e3eb;
+  background: #edf4f8;
+  border-radius: 6px;
+  color: #587a90;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+.logs-empty {
+  display: flex;
+  align-items: center;
+  gap: 23px;
+  padding: 32px;
+  background: linear-gradient(110deg, #fff, #fafcfd);
+}
+.empty-log-symbol {
+  height: 90px;
+  width: 75px;
+  border-radius: 12px;
+  background: #eff5f8;
+  color: #8eafbf;
+  border: 1px solid #dfeaf0;
+  display: grid;
+  place-items: center;
+  transform: rotate(-5deg);
+  flex-shrink: 0;
+}
+.logs-empty h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 9px;
+}
+.logs-empty p {
+  color: var(--muted);
+  line-height: 1.8;
+  font-size: 12px;
+}
+.logs-empty .subtle-badge {
+  margin-left: auto;
+}
+.day-navigation {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  min-width: 42px;
+  min-height: 45px;
+  border: 1px solid #d6e3eb;
+  border-radius: 9px;
+  background: white;
+  color: #507992;
+}
+.icon-button:hover:not(:disabled) {
+  background: #edf7f8;
+}
+.day-buttons {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.day-buttons button {
+  border: 1px solid #dae5ec;
+  background: white;
+  border-radius: 8px;
+  min-width: 132px;
+  text-align: left;
+  padding: 10px 15px;
+  font-size: 11px;
+  color: #5b7a8d;
+  white-space: nowrap;
+}
+.day-buttons button span {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.day-buttons button.active {
+  background: #e8f5f3;
+  border-color: #86bbb6;
+  color: #176e71;
+  box-shadow: inset 0 -2px #308f8d;
+}
+.log-sheet {
+  background: #fff;
+  border: 1px solid #cddce5;
+  border-radius: 12px;
+  padding: 28px 30px 0;
+  box-shadow: 0 4px 12px #2948600a;
+  overflow: hidden;
+  min-width: 0;
+}
+.log-sheet-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 22px;
+  padding-bottom: 21px;
+  border-bottom: 2px solid #456a7d;
+}
+.sheet-kicker {
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  font-weight: 650;
+}
+.log-sheet-heading h3 {
+  font-size: 27px;
+  font-weight: 650;
+  letter-spacing: -0.7px;
+  margin: 7px 0;
+}
+.log-sheet-heading p {
+  font-size: 10px;
+  color: var(--muted);
+}
+.sheet-date {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+}
+.sheet-date > strong {
+  font-size: 14px;
+  font-weight: 650;
+}
+.sheet-date > span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.sheet-date .projected-stamp {
+  color: #8b6a3d;
+  border: 1px solid #dcc7a6;
+  border-radius: 3px;
+  padding: 6px 8px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  margin-top: 6px;
+  background: #fffcf7;
+}
+.log-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) minmax(150px, 0.65fr);
+  gap: 20px;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #dfe7eb;
+}
+.log-route > div {
+  min-width: 0;
+}
+.log-route span {
+  display: block;
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.log-route strong {
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.log-route > svg {
+  color: #8faab8;
+}
+.log-mileage {
+  text-align: right;
+  border-left: 1px solid #e0e8ed;
+}
+.log-mileage strong {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+.log-mileage small {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12px;
+}
+.identity-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 17px 26px;
+  margin: 20px 0 25px;
+}
+.identity-grid > div {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e4eaee;
+}
+.identity-grid span {
+  display: block;
+  font-size: 9px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.identity-grid strong {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.log-grid-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  padding-top: 6px;
+  border-radius: 4px;
+}
+.log-grid {
+  display: block;
+  min-width: 1020px;
+  width: 100%;
+  font-family: Georgia, 'Times New Roman', serif;
+  background: #fff;
+}
+.grid-hour {
+  font-size: 9px;
+  fill: #263845;
+  font-variant-numeric: tabular-nums;
+}
+.grid-row-label {
+  font-size: 12px;
+  fill: #1f2f3b;
+  font-weight: 500;
+}
+.grid-small-label {
+  font-size: 8px;
+  fill: #52616c;
+  letter-spacing: 0.2px;
+}
+.grid-paper-title {
+  font:
+    700 17px 'Segoe UI',
+    Arial,
+    sans-serif;
+  fill: #1f2f3b;
+}
+.grid-paper-subtitle {
+  font:
+    600 8px 'Segoe UI',
+    Arial,
+    sans-serif;
+  fill: #334550;
+}
+.grid-paper-total {
+  font:
+    italic 700 17px Georgia,
+    'Times New Roman',
+    serif;
+  fill: #1f2f3b;
+  font-variant-numeric: tabular-nums;
+}
+.grid-duty-line {
+  stroke: #0874bb;
+  stroke-width: 3.4;
+}
+.grid-duty-line.assumed {
+  stroke: #607d8b;
+  stroke-dasharray: 6 4;
+}
+.grid-remarks-heading {
+  font:
+    600 12px 'Segoe UI',
+    Arial,
+    sans-serif;
+  fill: #263845;
+  letter-spacing: 0.7px;
+}
+.grid-remark-connector {
+  stroke: #0874bb;
+  stroke-width: 1.4;
+}
+.grid-remark-marker {
+  fill: #0874bb;
+}
+.grid-remark-index {
+  font:
+    700 9px 'Segoe UI',
+    Arial,
+    sans-serif;
+  fill: #0874bb;
+}
+.grid-remark-time {
+  font:
+    700 9px 'Segoe UI',
+    Arial,
+    sans-serif;
+  fill: #4d6575;
+}
+.grid-remark-label {
+  font:
+    italic 600 10px Georgia,
+    'Times New Roman',
+    serif;
+  fill: #223541;
+}
+.log-grid-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 7px 0 22px;
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.log-grid-note svg {
+  margin-top: 2px;
+}
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 11px;
+  line-height: 1.6;
+}
+th {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--muted);
+  background: #f4f7f9;
+  padding: 9px 10px;
+  border-bottom: 1px solid #dfe8ed;
+  white-space: nowrap;
+}
+td {
+  padding: 10px;
+  color: #4d6a7e;
+  border-bottom: 1px solid #e7edf1;
+  vertical-align: top;
+}
+td small {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.6;
+  margin-top: 3px;
+}
+.cycle-recap {
+  background: #f5f9fb;
+  padding: 18px;
+  border: 1px solid #e2eaf0;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+.cycle-recap h4 {
+  font-size: 13px;
+  font-weight: 650;
+  margin-bottom: 13px;
+}
+.cycle-recap dl {
+  margin: 0;
+}
+.cycle-recap dl > div {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  border-bottom: 1px solid #e4edf1;
+  padding: 9px 0;
+  font-size: 10px;
+}
+.cycle-recap dl > div:first-child {
+  padding-top: 0;
+}
+.cycle-recap dt {
+  color: var(--muted);
+}
+.cycle-recap dd {
+  text-align: right;
+  margin: 0;
+  color: #41687d;
+  font-weight: 600;
+}
+.cycle-recap p {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.7;
+  margin-top: 13px;
+}
+.segment-details {
+  border: 1px solid #e0e9ee;
+  border-radius: 7px;
+  overflow: hidden;
+  margin-top: 23px;
+}
+.segment-details summary {
+  padding: 13px 15px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b7187;
+  background: #f8fafb;
+}
+.segment-details summary span {
+  margin-left: 13px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 400;
+}
+.segment-details table {
+  min-width: 700px;
+}
+.segment-details td:nth-child(-n + 3) {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.signature-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  border-top: 1px solid #dbe5eb;
+  padding: 20px 0;
+  margin-top: 23px;
+}
+.signature-row > span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.signature-row strong {
+  margin-left: 19px;
+  font-size: 11px;
+  color: var(--muted);
+  border-bottom: 1px solid #bbccd6;
+  padding: 0 25px 5px 0;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.signature-row p {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1000px) {
+  .log-sheet {
+    padding: 24px 22px 0;
+  }
+  .logs-empty .subtle-badge {
+    display: none;
+  }
+  .signature-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+@media (max-width: 760px) {
+  .daily-logs-section {
+    margin-top: 30px;
+  }
+  .logs-section-heading {
+    flex-wrap: wrap;
+    gap: 13px;
+  }
+  .logs-section-heading h2 {
+    font-size: 23px;
+  }
+  .logs-section-heading p {
+    font-size: 11px;
+  }
+  .projected-badge {
+    padding: 7px 9px;
+    font-size: 8px;
+  }
+  .logs-empty {
+    padding: 25px 22px;
+    gap: 18px;
+  }
+  .logs-empty h3 {
+    font-size: 14px;
+  }
+  .logs-empty p {
+    font-size: 11px;
+  }
+  .logs-empty br {
+    display: none;
+  }
+  .empty-log-symbol {
+    width: 56px;
+    height: 75px;
+  }
+  .empty-log-symbol svg {
+    width: 35px;
+  }
+  .log-sheet {
+    padding: 20px 17px 0;
+  }
+  .log-sheet-heading {
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .sheet-date {
+    align-items: flex-start;
+    gap: 7px;
+  }
+  .log-sheet-heading h3 {
+    font-size: 25px;
+  }
+  .log-route {
+    grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+    gap: 14px;
+  }
+  .log-mileage {
+    grid-column: 1 / -1;
+    text-align: left;
+    border-left: 0;
+    border-top: 1px solid #e4ecf1;
+    padding-top: 14px;
+  }
+  .identity-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .log-grid-note {
+    margin-top: 10px;
+  }
+  .segment-details summary span {
+    display: block;
+    margin: 6px 0 0;
+    line-height: 1.6;
+  }
+  .signature-row strong {
+    display: inline-block;
+    padding-right: 18px;
+  }
+  .day-buttons button {
+    min-width: 116px;
+    padding-inline: 12px;
+  }
+  .day-navigation {
+    gap: 7px;
+  }
+  .icon-button {
+    min-width: 34px;
+    width: 34px;
+  }
+}
+@media (max-width: 400px) {
+  .logs-empty {
+    display: block;
+  }
+  .empty-log-symbol {
+    width: 45px;
+    height: 55px;
+    margin-bottom: 20px;
+  }
+}
