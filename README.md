@@ -120,18 +120,3 @@ npm run build
 Use `npm run format` to apply the shared frontend formatting style. Linting checks TypeScript and React Hooks; successful API payloads are also validated at runtime before the interface renders them.
 
 Automated scenarios use authored provider fixtures with no live network or keys. Live verification additionally requires searching three real locations and generating a short trip, a multi-day trip, and a high-cycle trip using the configured TomTom account. Do not confuse fixture coverage with verified provider entitlement or live facility data.
-
-## Deliberately excluded
-
-Accounts, saved trips, fleet management, vehicle configuration, live tracking, ELD certification, PDF export, deployment, recordings, commits, PRs and other submission deliverables. Generated reports/screenshots belong outside this project, in the working session's `files` folder.
-
-TomTom reference URLs:
-
-```text
-https://docs.tomtom.com/pricing
-https://docs.tomtom.com/places-search-api/documentation/places-search/discover
-https://docs.tomtom.com/places-search-api/documentation/places-search/poi-types
-https://docs.tomtom.com/routing-api/documentation/tomtom-maps/v1/calculate-route
-https://docs.tomtom.com/map-display-api/documentation/tomtom-maps/v1/raster/map-tile
-https://docs.tomtom.com/platform/documentation/api-best-practices/api-key-management-best-practices
-```
