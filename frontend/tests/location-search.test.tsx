@@ -61,8 +61,10 @@ describe('live location lookup', () => {
     await user.keyboard('{ArrowDown}{Enter}');
     expect(screen.getByText('signed-current')).toBeInTheDocument();
     expect(input).toHaveAttribute('aria-expanded', 'false');
-    await user.type(input, ' west');
+    await user.click(screen.getByRole('button', { name: 'Clear current location' }));
     expect(screen.getByText('Not selected')).toBeInTheDocument();
+    expect(input).toHaveValue('');
+    expect(input).toHaveFocus();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

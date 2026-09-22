@@ -81,7 +81,8 @@ describe('four-input planning workspace', () => {
       headers: { 'X-CSRFToken': 'csrf-test-token', 'Content-Type': 'application/json' },
     });
     expect(container.querySelector('.leaflet-tile')).toBeNull();
-    await user.type(screen.getByRole('combobox', { name: /Pickup location/ }), ' changed');
+    await user.click(screen.getByRole('button', { name: 'Clear pickup location' }));
+    expect(screen.getByRole('combobox', { name: /Pickup location/ })).toHaveValue('');
     expect(screen.queryByRole('heading', { name: 'Your trip plan' })).not.toBeInTheDocument();
     expect(screen.queryByRole('article')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Generate trip plan' }));

@@ -330,7 +330,7 @@ small {
 .required-mark {
   color: var(--muted);
   font-size: 12px;
-  margin-left: auto;
+  margin-left: 3px;
 }
 .search-control,
 .cycle-control {
@@ -375,6 +375,21 @@ input::placeholder {
 .search-control input:focus,
 .cycle-control input:focus {
   outline-offset: -3px;
+}
+.location-clear-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: #557e96;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+.location-clear-button:hover {
+  background: #eaf3f7;
+  color: var(--teal);
 }
 .field-hint,
 .selection-hint {
@@ -1605,5 +1620,9 @@ input::placeholder {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .spinner {
+    animation-duration: 0.8s !important;
+    animation-iteration-count: infinite !important;
   }
 }

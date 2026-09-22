@@ -118,6 +118,13 @@ export function LocationSearch({
     input.current?.focus();
   }
 
+  function clear() {
+    invalidate();
+    setQuery('');
+    onChange(null);
+    input.current?.focus();
+  }
+
   return (
     <div className={`location-field location-${field}`}>
       <label htmlFor={id}>
@@ -174,6 +181,16 @@ export function LocationSearch({
             }
           }}
         />
+        {query && (
+          <button
+            type="button"
+            className="location-clear-button"
+            aria-label={`Clear ${label.toLowerCase()}`}
+            onClick={clear}
+          >
+            <Icon name="close" size={17} />
+          </button>
+        )}
       </div>
       <p className={selected ? 'selection-hint' : 'field-hint'} id={`${id}-hint`}>
         {selected ? (
