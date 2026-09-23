@@ -1,3 +1,5 @@
+import type { AssumptionId } from './lib/assumptions';
+
 export type DutyStatus = 'off_duty' | 'sleeper' | 'driving' | 'on_duty';
 export type LocationField = 'current' | 'pickup' | 'dropoff';
 
@@ -11,12 +13,6 @@ export interface Location {
   token?: string;
 }
 
-export interface Assumption {
-  id: string;
-  title: string;
-  detail: string;
-}
-
 export interface Bootstrap {
   csrf_token: string;
   planning_token: string;
@@ -24,7 +20,8 @@ export interface Bootstrap {
   time_basis: string;
   map_key: string;
   provider_ready: boolean;
-  assumptions: Assumption[];
+  assumptions_version: string;
+  assumption_ids: AssumptionId[];
   limits: {
     days: number;
     facilities: number;
@@ -100,7 +97,8 @@ export interface Trip {
     cycle_remaining_hours: number;
   };
   days: DailyLog[];
-  assumptions: Assumption[];
+  assumptions_version: string;
+  assumption_ids: AssumptionId[];
   warnings: string[];
 }
 

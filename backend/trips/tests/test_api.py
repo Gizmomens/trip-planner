@@ -1,6 +1,5 @@
 import json
 import logging
-import threading
 from unittest.mock import patch
 
 from django.core.exceptions import RequestDataTooBig
@@ -10,6 +9,7 @@ from django.test import Client, RequestFactory, SimpleTestCase, override_setting
 from trips.api.middleware import ApiSafetyMiddleware, StripQueryFilter, throttle
 from trips.api.validation import signed_location
 from trips.domain.assumptions import Limits
+from trips.domain.errors import PlanningError
 from trips.domain.models import Location
 from trips.services.budget import Budget
 from trips.tests.test_planner import RoadProvider
@@ -39,8 +39,9 @@ class ApiTests(SimpleTestCase):
         self.assertNotIn("test-private", json.dumps(self.bootstrap))
         self.assertIn("08:00:00-06:00", self.bootstrap["departure_at"])
         self.assertEqual(self.bootstrap["limits"]["provider_requests"], 100)
-        sleeper = next(item for item in self.bootstrap["assumptions"] if item["id"] == "A11")
-        self.assertIn("sleeper-berth row", sleeper["detail"])
+        self.assertEqual(self.bootstrap["assumptions_version"], "2")
+        self.assertIn("A11", self.bootstrap["assumption_ids"])
+        self.assertNotIn("assumptions", self.bootstrap)
 
     def test_csrf_required_for_anonymous_trip(self):
         response = self.client.post("/api/v1/trips", self.body, content_type="application/json")
@@ -53,6 +54,14 @@ class ApiTests(SimpleTestCase):
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.json()["error"]["code"], "provider_not_configured")
 
+    def test_retryable_planning_error_includes_retry_after_header(self):
+        error = PlanningError("provider_quota", "The provider rate limit was reached. Try later.", 429, retry_after=60)
+        with patch("trips.api.views.TomTom") as adapter:
+            adapter.return_value.__enter__.side_effect = error
+            response = self.post()
+        self.assert_api_error(response, 429, "provider_quota")
+        self.assertEqual(response["Retry-After"], "60")
+
     def test_trip_contract_with_authored_routes(self):
         provider = RoadProvider()
         with patch("trips.api.views.TomTom") as adapter:
@@ -64,6 +73,8 @@ class ApiTests(SimpleTestCase):
         self.assertEqual(sum(result["days"][0]["totals"].values()), 86400)
         self.assertEqual(result["summary"]["on_duty_seconds"], 7200)
         self.assertEqual(result["stops"][-1]["location"]["name"], "Dropoff")
+        self.assertEqual(result["assumption_ids"], self.bootstrap["assumption_ids"])
+        self.assertNotIn("assumptions", result)
         self.assertNotIn("test-private", response.content.decode())
 
     def test_tampered_selection_and_planning_context(self):
@@ -185,25 +196,21 @@ class ApiTests(SimpleTestCase):
         self.assert_api_error(response, 504, "deadline_exceeded")
         serializer.assert_not_called()
 
-    def test_serialization_deadline_returns_error_and_releases_planner(self):
+    def test_serialization_deadline_returns_error(self):
         from django.http import JsonResponse
 
         now = [0]
         budget = Budget(Limits(), clock=lambda: now[0])
-        planners = threading.BoundedSemaphore(1)
         def serialize_late(data):
             response = JsonResponse(data)
             now[0] = 121
             return response
         with patch("trips.api.views.Budget", return_value=budget), patch("trips.api.views.TomTom") as adapter, \
-                patch("trips.api.views._planners", planners), \
                 patch("trips.api.views.JsonResponse", side_effect=serialize_late):
             adapter.return_value.__enter__.return_value = RoadProvider()
             response = self.post()
         self.assert_api_error(response, 504, "deadline_exceeded")
         self.assertNotIn("route", response.json())
-        self.assertTrue(planners.acquire(blocking=False))
-        planners.release()
 
     def test_lookup_serialization_deadline_returns_error(self):
         from django.http import JsonResponse

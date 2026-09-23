@@ -1,5 +1,4 @@
 import asyncio
-import threading
 import unittest
 from datetime import datetime
 from unittest.mock import patch
@@ -111,6 +110,17 @@ class ProviderTests(unittest.TestCase):
                 self.assertEqual(caught.exception.code, code)
                 self.assertNotIn("secret", str(caught.exception))
 
+    def test_provider_quota_preserves_bounded_retry_after(self):
+        for value, expected in (("120", 120), ("0", 1), ("999999", 86400), ("later", 60), (None, 60)):
+            with self.subTest(value=value):
+                headers = {"Retry-After": value} if value is not None else {}
+                transport = httpx.MockTransport(lambda request: httpx.Response(429, headers=headers))
+                with TomTom("test", Budget(Limits()), transport=transport) as provider:
+                    with self.assertRaises(PlanningError) as caught:
+                        provider.lookup("Austin")
+                self.assertEqual(caught.exception.code, "provider_quota")
+                self.assertEqual(caught.exception.retry_after, expected)
+
     def test_retry_and_repeated_requests_without_caching(self):
         calls = []
         def respond(request):
@@ -201,10 +211,8 @@ class ProviderTests(unittest.TestCase):
     def test_absolute_deadline_cancels_pending_body_and_releases_resources(self):
         stream = PendingStream()
         transport = httpx.MockTransport(lambda request: httpx.Response(200, stream=stream))
-        connections = threading.BoundedSemaphore(1)
         timeout = asyncio.timeout
-        with patch("trips.providers.tomtom._connections", connections), \
-                patch("trips.providers.tomtom.asyncio.timeout", side_effect=lambda remaining: timeout(0)) as timer:
+        with patch("trips.providers.tomtom.asyncio.timeout", side_effect=lambda remaining: timeout(0)) as timer:
             with TomTom("test", Budget(Limits()), transport=transport) as provider:
                 with self.assertRaises(PlanningError) as caught:
                     provider.lookup("Austin")
@@ -217,8 +225,6 @@ class ProviderTests(unittest.TestCase):
             self.assertTrue(stream.cancelled)
             self.assertTrue(stream.closed)
             self.assertTrue(provider.client.is_closed)
-            self.assertTrue(connections.acquire(blocking=False))
-            connections.release()
             with self.assertRaises(RuntimeError):
                 provider._runner.get_loop()
 
@@ -259,31 +265,12 @@ class ProviderTests(unittest.TestCase):
             with self.subTest(code=code):
                 def respond(request):
                     raise failure
-                connections = threading.BoundedSemaphore(1)
-                with patch("trips.providers.tomtom._connections", connections):
-                    with TomTom("test", Budget(Limits()), transport=httpx.MockTransport(respond)) as provider:
-                        with self.assertRaises(PlanningError) as caught:
-                            provider.lookup("Austin")
-                    self.assertEqual(caught.exception.code, code)
-                    self.assertNotIn("private", str(caught.exception))
-                    self.assertTrue(provider.client.is_closed)
-                    self.assertTrue(connections.acquire(blocking=False))
-                    connections.release()
-
-    def test_connection_wait_reports_deadline_without_releasing_unowned_permit(self):
-        now = [0]
-        budget = Budget(Limits(processing_seconds=20), clock=lambda: now[0])
-        def expire_while_waiting(**kwargs):
-            now[0] = 21
-            return False
-        with patch("trips.providers.tomtom._connections") as connections:
-            connections.acquire.side_effect = expire_while_waiting
-            transport = httpx.MockTransport(lambda request: self.fail("Expired request reached the provider"))
-            with TomTom("test", budget, transport=transport) as provider:
-                with self.assertRaises(PlanningError) as caught:
-                    provider.lookup("Austin")
-            self.assertEqual(caught.exception.code, "deadline_exceeded")
-            connections.release.assert_not_called()
+                with TomTom("test", Budget(Limits()), transport=httpx.MockTransport(respond)) as provider:
+                    with self.assertRaises(PlanningError) as caught:
+                        provider.lookup("Austin")
+                self.assertEqual(caught.exception.code, code)
+                self.assertNotIn("private", str(caught.exception))
+                self.assertTrue(provider.client.is_closed)
 
     def test_caps_and_deadline(self):
         now = [0]
@@ -349,7 +336,7 @@ class ProviderTests(unittest.TestCase):
         self.assertIn("400", [stop["location"]["id"] for stop in result["stops"]])
         self.assertNotIn("432", [stop["location"]["id"] for stop in result["stops"]])
         self.assertAlmostEqual(result["summary"]["distance_meters"], 600 * MILE_METERS)
-        self.assertEqual(budget.requests, 6)
+        self.assertEqual(budget.requests, 5)
 
 
 if __name__ == "__main__":

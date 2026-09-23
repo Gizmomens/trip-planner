@@ -4,9 +4,9 @@ import { bootstrap, day, locations, trip } from './fixtures';
 
 describe('bootstrap response shape', () => {
   it('accepts an unconfigured provider, empty public key, and no assumptions', () => {
-    expect(isBootstrap({ ...bootstrap, provider_ready: false, map_key: '', assumptions: [] })).toBe(
-      true,
-    );
+    expect(
+      isBootstrap({ ...bootstrap, provider_ready: false, map_key: '', assumption_ids: [] }),
+    ).toBe(true);
   });
 
   it.each([
@@ -19,7 +19,8 @@ describe('bootstrap response shape', () => {
     { time_basis: null },
     { map_key: null },
     { provider_ready: 'true' },
-    { assumptions: [{ ...bootstrap.assumptions[0], detail: null }] },
+    { assumptions_version: '' },
+    { assumption_ids: ['unknown'] },
     { limits: { ...bootstrap.limits, days: '30' } },
     { limits: { ...bootstrap.limits, facilities: NaN } },
     { limits: { ...bootstrap.limits, provider_requests: Infinity } },
@@ -79,7 +80,7 @@ describe('trip response structure', () => {
         stops: [],
         route: { geometry: [], instructions: [] },
         days: [],
-        assumptions: [],
+        assumption_ids: [],
         warnings: [],
       }),
     ).toBe(true);
@@ -125,7 +126,8 @@ describe('trip response structure', () => {
     ['summary field', { summary: { ...trip.summary, elapsed_seconds: '18000' } }],
     ['summary Infinity', { summary: { ...trip.summary, cycle_remaining_hours: Infinity } }],
     ['warnings', { warnings: [null] }],
-    ['assumption title', { assumptions: [{ ...bootstrap.assumptions[0], title: 1 }] }],
+    ['assumption version', { assumptions_version: null }],
+    ['unknown assumption ID', { assumption_ids: ['unknown'] }],
     ['location record', { locations: [null] }],
     ['location name', { locations: [{ ...locations[0], name: {} }] }],
     ['location token', { locations: [{ ...locations[0], token: 5 }] }],
