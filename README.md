@@ -76,9 +76,10 @@ production, normally `main`, or select another Production Branch in Vercel.
    `VERCEL_URL`, `VERCEL_BRANCH_URL` and `VERCEL_PROJECT_PRODUCTION_URL` as
    exact allowed hosts.
 
-The service configuration pins Node 24 and Python 3.14-compatible builds,
-uses `npm ci` plus `npm run build` for Vite, and gives the Django function 180
-seconds. The application still stops planning at its own 120-second deadline.
+The frontend requires Node 24 and builds with `npm ci` plus `npm run build`.
+Vercel detects the Django Python runtime; `backend\pyproject.toml` requires
+Python 3.12 or newer. The Django function has 180 seconds, while the
+application still stops planning at its own 120-second deadline.
 
 ### 3. Configure environment variables
 

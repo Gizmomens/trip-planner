@@ -29,7 +29,7 @@ class DeploymentTests(SimpleTestCase):
         self.assertEqual(config["services"]["frontend"]["outputDirectory"], "dist")
         backend = config["services"]["backend"]
         self.assertEqual(backend["root"], "backend/")
-        self.assertEqual(backend["runtime"], "python3.14")
+        self.assertNotIn("runtime", backend)
         self.assertEqual(backend["entrypoint"], "config.wsgi:application")
         self.assertEqual(backend["functions"]["config/wsgi.py"]["maxDuration"], 180)
 
