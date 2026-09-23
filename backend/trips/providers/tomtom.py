@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 import math
-import threading
 from collections.abc import AsyncIterator
 
 import httpx
@@ -12,7 +11,6 @@ from trips.domain.models import Location, Route, RoutePoint
 from trips.services.budget import Budget
 
 logger = logging.getLogger("trips.provider")
-_connections = threading.BoundedSemaphore(4)
 _MAX_RESPONSE_BYTES = 8_000_000
 _STATES = frozenset(
     "AL AZ AR CA CO CT DE FL GA ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT "
@@ -23,6 +21,13 @@ _FACILITY_TYPES = frozenset({"fuel_station", "rest_area", "service_area"})
 
 def invalid_response() -> PlanningError:
     return PlanningError("provider_data", "The map provider returned incomplete or invalid data. Try again.", 502)
+
+
+def retry_after(value: str | None, default: int) -> int:
+    try:
+        return min(86_400, max(1, int(value or "")))
+    except ValueError:
+        return default
 
 
 def number(value: object, *, minimum: float = 0) -> float:
@@ -191,9 +196,6 @@ class TomTom:
             query.append(("key", self.key))
         for attempt in range(2):
             remaining = self.budget.request()
-            if not _connections.acquire(timeout=min(remaining, 5)):
-                self.budget.check()
-                raise PlanningError("provider_busy", "The map connection is busy. Try again shortly.", 503)
             try:
                 remaining = self.budget.check()
                 deadline = asyncio.timeout(remaining)
@@ -205,7 +207,12 @@ class TomTom:
                     if status in {401, 403}:
                         raise PlanningError("provider_credentials", "The TomTom key is invalid or is not enabled for a required service.", 503)
                     if status == 429:
-                        raise PlanningError("provider_quota", "TomTom's request quota or rate limit was reached. Try later.", 429)
+                        raise PlanningError(
+                            "provider_quota",
+                            "TomTom's request quota or rate limit was reached. Try later.",
+                            429,
+                            retry_after=retry_after(response.headers.get("Retry-After"), 60),
+                        )
                     if status >= 500 and attempt == 0:
                         continue
                     routing_error = status == 400 and method == "GET" and path.startswith("/routing/1/calculateRoute/")
@@ -241,8 +248,6 @@ class TomTom:
                 raise PlanningError("provider_timeout", "The map provider timed out. Try again.", 504) from None
             except httpx.RequestError:
                 raise PlanningError("provider_unavailable", "The map provider could not be reached.", 502) from None
-            finally:
-                _connections.release()
         raise PlanningError("provider_unavailable", "The map provider is temporarily unavailable.", 502)
 
     def lookup(self, query: str) -> list[Location]:

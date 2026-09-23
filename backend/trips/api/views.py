@@ -1,5 +1,4 @@
 import logging
-import threading
 from dataclasses import asdict
 from datetime import datetime
 from functools import wraps
@@ -12,14 +11,13 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from trips.api.middleware import error_response
 from trips.api.validation import signed_location, trip_input
-from trips.domain.assumptions import ASSUMPTIONS, ASSUMPTIONS_VERSION, Limits, TERMINAL_TZ, TIME_BASIS
+from trips.domain.assumptions import ASSUMPTION_IDS, ASSUMPTIONS_VERSION, Limits, TERMINAL_TZ, TIME_BASIS
 from trips.domain.errors import PlanningError
 from trips.providers.tomtom import TomTom
 from trips.services.budget import Budget
 from trips.services.planner import Planner
 
 logger = logging.getLogger("trips.api")
-_planners = threading.BoundedSemaphore(2)
 
 
 def endpoint(method):
@@ -34,7 +32,10 @@ def endpoint(method):
                 return view(request)
             except PlanningError as error:
                 logger.warning("planning_error id=%s code=%s", request.request_id, error.code)
-                return error_response(error.code, error.message, error.status, request.request_id, error.fields)
+                response = error_response(error.code, error.message, error.status, request.request_id, error.fields)
+                if error.retry_after is not None:
+                    response["Retry-After"] = str(error.retry_after)
+                return response
         return wrapped
     return decorate
 
@@ -59,7 +60,9 @@ def bootstrap(request):
         "planning_token": signing.dumps({"departure_at": departure, "assumptions_version": ASSUMPTIONS_VERSION}, salt="spotter.planning"),
         "departure_at": departure, "time_basis": TIME_BASIS,
         "map_key": settings.TOMTOM_MAP_KEY, "provider_ready": bool(settings.TOMTOM_API_KEY),
-        "assumptions": ASSUMPTIONS, "limits": asdict(limits()),
+        "assumptions_version": ASSUMPTIONS_VERSION,
+        "assumption_ids": ASSUMPTION_IDS,
+        "limits": asdict(limits()),
     })
 
 
@@ -77,15 +80,10 @@ def locations(request):
 @endpoint("POST")
 def trips(request):
     points, departure, cycle = trip_input(request)
-    if not _planners.acquire(blocking=False):
-        raise PlanningError("planner_busy", "Two trips are already being planned. Try again shortly.", 503)
-    try:
-        budget = Budget(limits())
-        with TomTom(settings.TOMTOM_API_KEY, budget) as provider:
-            result = Planner(provider, budget).plan(points, departure, cycle)
-        return budgeted_response(result, budget)
-    finally:
-        _planners.release()
+    budget = Budget(limits())
+    with TomTom(settings.TOMTOM_API_KEY, budget) as provider:
+        result = Planner(provider, budget).plan(points, departure, cycle)
+    return budgeted_response(result, budget)
 
 
 def csrf_failure(request, reason=""):

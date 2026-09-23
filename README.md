@@ -53,12 +53,12 @@ Never commit `.env` or paste keys into chat. Domain restrictions do not make a b
 | --- | --- |
 | `backend\trips\providers\tomtom.py` | Fixed-host HTTP adapter, normalized location/route data, real facility search, bounded requests and safe provider errors. No response caching. |
 | `backend\trips\services\planner.py` | Route-aware facility selection, detours, bounded backtracking and the final accepted itinerary. |
-| `backend\trips\domain` | Typed activities, pure HOS state, independent replay validation, log splitting and assumption configuration. |
+| `backend\trips\domain` | Typed activities, pure HOS state, independent replay validation, log splitting and numerical assumption configuration. |
 | `backend\trips\api` | Signed location/planning context, input validation, anonymous CSRF protection and request throttling. |
 | `frontend\src` | Four-input interface, map, summaries, stop timeline/directions and SVG daily log sheets. |
 | `Project guide` | Original assessment and reference resources, preserved unchanged. |
 
-The server signs selected location data: a browser cannot silently replace it with arbitrary coordinates. Every generated result uses a single accepted activity timeline. Its route, stops, summaries and daily logs are derived from that timeline rather than independently calculated in the browser.
+The server signs selected location data: a browser cannot silently replace it with arbitrary coordinates. Every generated result uses a single accepted activity timeline. Its route, stops, summaries and daily logs are derived from that timeline rather than independently calculated in the browser. Assumption identifiers and numerical rules remain server-owned; the matching user-facing titles and descriptions live in the frontend.
 
 The planner searches for a real facility **before** a driving/fuel limit, routes to it, includes the detour, and checks the resulting schedule. A point interpolated along the route is only a search center, never a fabricated stop. If the available data and bounded search cannot produce a complete valid plan, the API returns an explicit error.
 
@@ -91,11 +91,16 @@ Configurable guardrails in `backend\.env`:
 | `PLAN_MAX_REQUESTS` | 100 outbound requests per generation | Bounds searches, candidate routes and retries; all count. |
 | `PLAN_TIMEOUT_SECONDS` | 120 seconds | Application deadline: cancels pending HTTP waits and rejects expired results. |
 
-The first exhausted limit stops planning with an error; partial results are not presented as successful. Location lookup and browser tile requests are separate from the trip budget. Local API throttles allow 6 generation requests and 30 lookup/bootstrap requests per minute per direct client IP, with two active planners and four active provider connections.
+The first exhausted limit stops planning with an error; partial results are not presented as successful. Location lookup and browser tile requests are separate from the trip budget. Local API throttles allow 6 generation requests and 30 lookup/bootstrap requests per minute per direct client IP. There is no application-level cap on active planners or provider connections; deployed web-worker capacity and operating-system/network limits govern concurrency.
 
-Provider responses are not cached; repeated calls count against the request budget. The adapter requests uncompressed JSON and rejects unexpected compression or bodies above eight megabytes before accumulation. API errors use a safe JSON envelope with a request ID, including during local DEBUG development.
+Provider and completed trip responses are not cached; repeated calls and repeated identical trips are recalculated and count against the request budget. The adapter requests uncompressed JSON and rejects unexpected compression or bodies above eight megabytes before accumulation. API errors use a safe JSON envelope with a request ID, including during local DEBUG development.
 
-These in-process controls are for a single local assessment instance, not distributed production abuse protection. The timeout is an application guardrail, not an operating-system execution cutoff. No raw addresses or itineraries are persisted; transient request data and signed browser-held selections exist only to calculate the trip. Canceling a browser request does not cancel server-side work; the application deadline still applies.
+Local request throttling returns HTTP 429 with `Retry-After: 60`. TomTom 429
+responses become a structured `provider_quota` 429 and preserve a bounded
+numeric upstream `Retry-After` value, defaulting to 60 seconds when the
+provider omits or malforms it.
+
+The timeout is an application guardrail, not an operating-system execution cutoff. No raw addresses or itineraries are persisted; transient request data and signed browser-held selections exist only to calculate the trip. The frontend Cancel action aborts its browser request and rejects late output, but the synchronous backend calculation continues until completion, failure or the application deadline. A production version should use cancellable background jobs and a shared result cache such as Redis; both are intentionally omitted from this proof of concept.
 
 ## Checks
 

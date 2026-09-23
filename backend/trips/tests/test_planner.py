@@ -81,6 +81,11 @@ class PlannerTests(unittest.TestCase):
         self.assertAlmostEqual(sum(day["distance_meters"] for day in result["days"]), result["summary"]["distance_meters"])
         self.assertTrue(all(sum(day["totals"].values()) == 86400 for day in result["days"]))
 
+    def test_successful_plan_does_not_request_the_same_route_twice(self):
+        provider = RoadProvider()
+        self.plan(1200, provider=provider)
+        self.assertEqual(len(provider.visited), len(set(provider.visited)), provider.visited)
+
     def test_initial_cycle_restart_and_no_extra_final_rest(self):
         result = self.plan(60, cycle=70)
         self.assertEqual(result["activities"][0]["purpose"], "pickup")

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from math import asin, cos, radians, sin, sqrt
 from uuid import uuid4
 
-from trips.domain.assumptions import ASSUMPTIONS, FUEL_RANGE_METERS, TIME_BASIS
+from trips.domain.assumptions import ASSUMPTION_IDS, ASSUMPTIONS_VERSION, FUEL_RANGE_METERS, TIME_BASIS
 from trips.domain.errors import PlanningError
 from trips.domain.hos import HOSState
 from trips.domain.logs import build_logs
@@ -100,9 +100,9 @@ class Planner:
         if self.departure and (path.now - timedelta(microseconds=1)).date() >= self.departure.date() + timedelta(days=self.budget.limits.days):
             raise PlanningError("day_limit", "The plan exceeds the supported number of calendar days.")
 
-    def _advance(self, path: Path, target: Location, visited: frozenset[str]) -> Path:
+    def _advance(self, path: Path, target: Location, visited: frozenset[str], direct: Route | None = None) -> Path:
         self.check(path)
-        direct = self.provider.route(path.current, target)
+        direct = direct or self.provider.route(path.current, target)
         allowance = path.state.allowance(path.now)
         fuel_remaining = max(0, FUEL_RANGE_METERS - path.fuel_meters)
         if direct.seconds <= allowance and direct.meters <= fuel_remaining:
@@ -117,7 +117,7 @@ class Planner:
                 refreshed = path.fork()
                 refreshed.stop(purpose, duration)
                 if refreshed.state.allowance(refreshed.now) > allowance:
-                    return self._advance(refreshed, target, visited)
+                    return self._advance(refreshed, target, visited, direct)
             raise PlanningError("no_facility", "No driving capacity is available from this stop.")
 
         attempted: set[str] = set(visited)
@@ -145,7 +145,7 @@ class Planner:
                             candidate.stop("fuel", 1800, working=True)
                         if not fuel_binding:
                             self._rest_for_binding_limit(path, candidate)
-                        return self._advance(candidate, target, visited | {facility.id})
+                        return self._advance(candidate, target, visited | {facility.id}, onward)
                     except PlanningError as error:
                         if error.code not in _CANDIDATE_FAILURES:
                             raise
@@ -156,7 +156,7 @@ class Planner:
             refreshed.stop(purpose, duration)
             if refreshed.state.allowance(refreshed.now) > allowance:
                 try:
-                    return self._advance(refreshed, target, visited)
+                    return self._advance(refreshed, target, visited, direct)
                 except PlanningError as error:
                     if error.code not in _CANDIDATE_FAILURES:
                         raise
@@ -241,7 +241,10 @@ class Planner:
                 "elapsed_seconds": int((path.now - departure).total_seconds()),
                 "days": len(days), "cycle_remaining_hours": max(0, 70 - verified.cycle_seconds / HOUR),
             },
-            "days": days, "assumptions": ASSUMPTIONS, "warnings": warnings,
+            "days": days,
+            "assumptions_version": ASSUMPTIONS_VERSION,
+            "assumption_ids": ASSUMPTION_IDS,
+            "warnings": warnings,
         }
         self.budget.check()
         return result

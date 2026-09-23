@@ -1,13 +1,5 @@
-import type {
-  Activity,
-  Assumption,
-  Bootstrap,
-  DailyLog,
-  DutyStatus,
-  Location,
-  Stop,
-  Trip,
-} from '../types';
+import type { Activity, Bootstrap, DailyLog, DutyStatus, Location, Stop, Trip } from '../types';
+import { isAssumptionId } from './assumptions';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -76,10 +68,6 @@ function isSelectableLocation(value: unknown): value is Location & { token: stri
   return isLocation(value) && isNonemptyString(value.token);
 }
 
-function isAssumption(value: unknown): value is Assumption {
-  return isRecord(value) && isString(value.id) && isString(value.title) && isString(value.detail);
-}
-
 export function isBootstrap(value: unknown): value is Bootstrap {
   return (
     isRecord(value) &&
@@ -89,7 +77,8 @@ export function isBootstrap(value: unknown): value is Bootstrap {
     isString(value.time_basis) &&
     isString(value.map_key) &&
     typeof value.provider_ready === 'boolean' &&
-    isArrayOf(value.assumptions, isAssumption) &&
+    isNonemptyString(value.assumptions_version) &&
+    isArrayOf(value.assumption_ids, isAssumptionId) &&
     isRecord(value.limits) &&
     isFiniteNumber(value.limits.days) &&
     isFiniteNumber(value.limits.facilities) &&
@@ -215,7 +204,8 @@ export function isTrip(value: unknown): value is Trip {
     isRoute(value.route) &&
     isSummary(value.summary) &&
     isArrayOf(value.days, isDailyLog) &&
-    isArrayOf(value.assumptions, isAssumption) &&
+    isNonemptyString(value.assumptions_version) &&
+    isArrayOf(value.assumption_ids, isAssumptionId) &&
     isArrayOf(value.warnings, isString)
   );
 }

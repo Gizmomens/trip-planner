@@ -37,13 +37,8 @@ export const bootstrap: Bootstrap = {
   time_basis: 'UTC-06:00',
   map_key: '',
   provider_ready: true,
-  assumptions: [
-    {
-      id: 'fresh-shift',
-      title: 'Fresh initial shift',
-      detail: 'At least 10 hours off duty before departure.',
-    },
-  ],
+  assumptions_version: '2',
+  assumption_ids: ['A08', 'A09', 'A12', 'A11', 'A20', 'A21', 'A17', 'A26'],
   limits: { days: 30, facilities: 100, provider_requests: 100, processing_seconds: 120 },
 };
 
@@ -214,7 +209,8 @@ export const trip: Trip = {
     cycle_remaining_hours: 55,
   },
   days: [day],
-  assumptions: bootstrap.assumptions,
+  assumptions_version: bootstrap.assumptions_version,
+  assumption_ids: bootstrap.assumption_ids,
   warnings: ['Facility access is assumed, not verified.'],
 };
 

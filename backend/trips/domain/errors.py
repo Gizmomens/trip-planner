@@ -1,7 +1,15 @@
 class PlanningError(Exception):
-    def __init__(self, code: str, message: str, status: int = 422, fields: dict | None = None):
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        status: int = 422,
+        fields: dict | None = None,
+        retry_after: int | None = None,
+    ):
         super().__init__(message)
         self.code = code
         self.message = message
         self.status = status
         self.fields = fields or {}
+        self.retry_after = retry_after

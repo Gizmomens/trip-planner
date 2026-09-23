@@ -1,13 +1,15 @@
 import { Icon } from './Icon';
-import type { Assumption, Bootstrap } from '../types';
+import { assumptionsFor, type AssumptionId } from '../lib/assumptions';
+import type { Bootstrap } from '../types';
 
 export function Assumptions({
-  assumptions,
+  assumptionIds,
   limits,
 }: {
-  assumptions: Assumption[];
+  assumptionIds: AssumptionId[];
   limits?: Bootstrap['limits'];
 }) {
+  const assumptions = assumptionsFor(assumptionIds);
   return (
     <details className="assumptions panel" id="planning-assumptions">
       <summary>

@@ -149,7 +149,7 @@ export default function App() {
         </div>
         <DailyLogs key={planner.trip?.id ?? 'empty'} trip={planner.trip} />
         <Assumptions
-          assumptions={planner.trip?.assumptions ?? planner.bootstrap?.assumptions ?? []}
+          assumptionIds={planner.trip?.assumption_ids ?? planner.bootstrap?.assumption_ids ?? []}
           limits={planner.bootstrap?.limits}
         />
       </main>
