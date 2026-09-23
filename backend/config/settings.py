@@ -7,14 +7,25 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
+
+
+def environment_list(name: str, default: str = "") -> list[str]:
+    return [value.strip() for value in os.getenv(name, default).split(",") if value.strip()]
+
+
 DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() == "true"
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
 if not SECRET_KEY:
     if not DEBUG:
         raise ImproperlyConfigured("Set DJANGO_SECRET_KEY, or enable local DJANGO_DEBUG.")
     SECRET_KEY = secrets.token_urlsafe(48)
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]").split(",")
+ALLOWED_HOSTS = environment_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]")
+for variable in ("VERCEL_URL", "VERCEL_BRANCH_URL", "VERCEL_PROJECT_PRODUCTION_URL"):
+    if host := os.getenv(variable, "").strip():
+        ALLOWED_HOSTS.append(host)
+ALLOWED_HOSTS = list(dict.fromkeys(ALLOWED_HOSTS))
 ROOT_URLCONF = "config.urls"
+WSGI_APPLICATION = "config.wsgi.application"
 INSTALLED_APPS = ["trips"]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -31,6 +42,7 @@ CSRF_FAILURE_VIEW = "trips.api.views.csrf_failure"
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Strict"
 CSRF_COOKIE_SECURE = not DEBUG
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = not DEBUG
 SECURE_HSTS_SECONDS = 31_536_000 if not DEBUG else 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG

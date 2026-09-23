@@ -27,6 +27,18 @@ Use `npm run format` after editing to apply the shared Prettier style. ESLint ch
 
 No frontend environment file is needed. Set the separate, restricted **public** TomTom raster-map key on the backend; the bootstrap response supplies it to the browser. Browser-visible map keys must have appropriate product and allowed-origin restrictions. The frontend only constructs tile URLs under `https://api.tomtom.com/map/1/tile/basic/main/`. It never receives or uses the server credential. No tiles are requested without a syntactically valid public key.
 
+## Vercel deployment
+
+The repository root `vercel.json` deploys this directory as the Vite service
+and routes `/api/*` to the sibling Django service on the same Vercel hostname.
+No frontend API-base environment variable or CORS configuration is required.
+Vercel runs `npm ci`, `npm run build` and serves `dist`.
+
+Configure deployment secrets and both TomTom keys on the Vercel project, not in
+this directory. The public map key is returned by Django at runtime and should
+be restricted to Map Display plus the approved production domain. See the root
+README for dashboard, firewall and smoke-test instructions.
+
 ## Flow and boundaries
 
 - Four required inputs: current location, pickup, drop-off, and finite current cycle hours from 0 through 192 (the physical maximum across eight days). Search is explicit; the user selects a signed result. Editing text immediately invalidates that selection. Values from 70 through 192 are accepted and disclose the planned restart. Both frontend and backend validate the 192-hour upper bound.
@@ -42,4 +54,4 @@ No frontend environment file is needed. Set the separate, restricted **public** 
 
 These are projected assessment plans, not certified ELD records or live navigation. Generic truck routing does not verify clearance for a particular vehicle. Actual provider-listed facilities are assumed usable at any time; opening hours, parking, overnight permission, and fuel availability are not verified. The model uses full daily rests and conservative cycle restarts, not split-sleeper optimization or inferred daily history. The backend supplies versioned assumption IDs and numerical caps; frontend-owned copy renders the corresponding disclosures.
 
-No accounts, saved trips, analytics, demo mode, PDF export, alternate map provider, paid service setup, or deployment is included. Live routing verification requires locally configured TomTom credentials. Tests use authored API fixtures only, never runtime fallback data.
+No accounts, saved trips, analytics, demo mode, PDF export, alternate map provider, or paid service setup is included. Vercel deployment configuration is included, but creating the cloud project, configuring credentials/domains/firewall rules and performing the live deployment remain operator actions. Live routing verification requires configured TomTom credentials. Tests use authored API fixtures only, never runtime fallback data.

@@ -47,6 +47,113 @@ Without keys, the UI renders an explicit configuration notice and the API return
 
 Never commit `.env` or paste keys into chat. Domain restrictions do not make a browser key secret. Provider credentials and query parameters are excluded from application logs.
 
+## Deploy to Vercel
+
+The repository includes a root `vercel.json` for one same-origin Vercel
+Services deployment:
+
+- `frontend\` builds the Vite application and serves `/`.
+- `backend\` runs Django through `config.wsgi.application`.
+- Ordered rewrites send `/api/*` to Django before the frontend catch-all.
+
+This preserves the existing relative API URLs, secure CSRF cookie and
+`X-CSRFToken` header. Do not configure CORS or a separate browser API hostname.
+Vercel Services is currently a beta feature.
+
+### 1. Prepare the Git branch
+
+Push the commit containing `vercel.json`, `backend\config\wsgi.py` and the
+production settings. Merge it into the branch that Vercel should treat as
+production, normally `main`, or select another Production Branch in Vercel.
+
+### 2. Import the project
+
+1. In Vercel, choose **Add New → Project** and import
+   `Gizmomens/trip-planner`.
+2. Leave **Root Directory** at the repository root.
+3. Set **Framework Preset** to **Services**.
+4. Enable **Automatically expose System Environment Variables**. Django uses
+   `VERCEL_URL`, `VERCEL_BRANCH_URL` and `VERCEL_PROJECT_PRODUCTION_URL` as
+   exact allowed hosts.
+
+The service configuration pins Node 24 and Python 3.14-compatible builds,
+uses `npm ci` plus `npm run build` for Vite, and gives the Django function 180
+seconds. The application still stops planning at its own 120-second deadline.
+
+### 3. Configure environment variables
+
+Add these in **Project Settings → Environment Variables** for Production and
+Preview:
+
+| Variable | Production value |
+| --- | --- |
+| `DJANGO_DEBUG` | `false` |
+| `DJANGO_SECRET_KEY` | A new high-entropy value generated for this deployment. |
+| `DJANGO_ALLOWED_HOSTS` | Optional additional custom domains, comma-separated. Do not add URL schemes. |
+| `TOMTOM_API_KEY` | Rotated server key restricted to the Routing and Places/Search products. |
+| `TOMTOM_MAP_KEY` | Browser map-display-only key restricted to approved domains. |
+| `PLAN_MAX_DAYS` | `30` |
+| `PLAN_MAX_FACILITIES` | `100` |
+| `PLAN_MAX_REQUESTS` | `100` |
+| `PLAN_TIMEOUT_SECONDS` | `120` |
+
+Generate the Django secret locally without saving it in source control:
+
+```powershell
+py -3.14 -c "import secrets; print(secrets.token_urlsafe(64))"
+```
+
+Rotate the server TomTom key that was previously shared during development.
+Add the production Vercel/custom domain to the public map key's domain
+whitelist. Use separate Preview and Production map keys if previews need maps.
+
+### 4. Add a firewall rate limit
+
+The Django throttle is process-local and is not a global control across Vercel
+Function instances. Before exposing anonymous trip generation publicly, open
+**Firewall → Configure → New Rule** and rate-limit:
+
+- Path: `/api/v1/trips`
+- Method: `POST`
+- Key: client IP
+- Fixed window: 60 seconds
+- Limit: 6 requests
+- Action: return HTTP 429
+
+On a plan that permits additional rules, separately limit
+`/api/v1/locations` to 30 requests per minute per IP.
+
+### 5. Deploy and verify
+
+Deploy from the dashboard, then verify the following through the deployment
+hostname:
+
+1. `/api/v1/bootstrap` returns JSON and sets a Secure CSRF cookie.
+2. Location suggestions return signed results.
+3. A trip POST succeeds with the bootstrap CSRF token.
+4. A short trip, a high-cycle restart trip and a multi-day route render.
+5. TomTom tiles load only from the approved production domain.
+6. API failures retain their structured JSON error and request ID.
+
+Vercel Functions have a 4.5 MB request/response payload ceiling. Verify the
+largest supported multi-day response remains below it. SQLite and process
+memory are not durable across function instances; this application does not
+persist accounts, trips or user data, so no production database is configured.
+The in-process throttle is retained only as a local/basic guard.
+
+Optional CLI validation from the repository root, after installing and
+authenticating Vercel CLI 50.38 or newer:
+
+```powershell
+vercel link
+vercel pull --yes
+vercel build --yes
+vercel dev -L
+```
+
+`vercel build --prod` performs a production-environment build after
+`vercel pull --environment=production`.
+
 ## How it works
 
 | Component | Responsibility |
@@ -110,6 +217,20 @@ From `backend` with `.env` configured for local development:
 .\.venv\Scripts\python.exe manage.py check
 .\.venv\Scripts\python.exe manage.py test trips.tests
 ```
+
+Before deployment, run a production settings check with synthetic or locally
+injected values:
+
+```powershell
+$env:DJANGO_DEBUG = "false"
+$env:DJANGO_SECRET_KEY = "replace-with-a-long-temporary-check-value"
+$env:DJANGO_ALLOWED_HOSTS = "deployment.example.com"
+.\.venv\Scripts\python.exe manage.py check --deploy
+```
+
+The deliberate `SECURE_HSTS_PRELOAD=false` setting produces Django warning
+`security.W021`; do not enable browser preload until the final domain and all
+subdomains are ready for that long-lived commitment.
 
 From `frontend`:
 
