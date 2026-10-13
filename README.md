@@ -1,6 +1,6 @@
 # Spotter
 
-A Django + React trip planner for the supplied full-stack assessment. Enter the current, pickup and drop-off locations and cycle hours already used. The application plans a truck route through real mapped facilities, schedules duty/rest activities, and draws projected daily log sheets.
+A Django + React trip planner truckers in the US. Enter the current, pickup and drop-off locations and cycle hours already used. The application plans a truck route through real mapped facilities, schedules duty/rest activities, and draws projected daily log sheets.
 
 ## Local setup (PowerShell)
 
